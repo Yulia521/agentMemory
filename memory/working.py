@@ -1,5 +1,7 @@
+from utils.config import MAX_WORKING_MEMORY_SIZE
+
 class WorkingMemory:
-    def __init__(self, max_size=10):
+    def __init__(self, max_size=MAX_WORKING_MEMORY_SIZE):
         self.max_size = max_size
         self.messages = []
 

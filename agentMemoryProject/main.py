@@ -1,31 +1,64 @@
-# 文件路径: main.py
-from core.memory_system import MultiLevelMemory
+import os
+import time
+from dotenv import load_dotenv
+from core.agent_engine import AgentEngine
+from utils.monitor import PerformanceMonitor
 
-def mock_agent_response(user_input):
-    # 模拟一个简单的模型回复
-    return f"我听到了，你说的是: {user_input}"
+# 1. 加载 .env 配置文件
+# 它会自动读取你填好的 OPENAI_API_KEY, OPENAI_API_BASE 和 MODEL_NAME
+load_dotenv()
 
 def main():
-    # 实例化你的记忆系统
-    mem_sys = MultiLevelMemory()
+    # 2. 初始化性能监控器 (用于记录你论文里需要的延迟数据)
+    monitor = PerformanceMonitor()
 
-    print("=== Agent 多级记忆测试启动 ===")
+    print("正在连接云端大模型并初始化 Mem0 记忆系统...")
+    try:
+        # 3. 实例化 Agent 引擎
+        agent = AgentEngine()
+    except Exception as e:
+        print(f"初始化失败，请检查 .env 配置或网络连接: {e}")
+        return
 
-    # 模拟 5 轮对话，观察第 3 轮时是否触发压缩
-    for i in range(1, 6):
-        user_in = f"这是我的第 {i} 条消息"
-        print(f"\n--- 第 {i} 轮交互 ---")
+    # 为当前实验设置一个固定的用户 ID (对应任务书中的“跨会话”测试)
+    user_id = "hust_student_2026"
 
-        # 1. 模拟 Agent 获取记忆
-        brain_context = mem_sys.get_all_context()
-        print(f"Agent 当前检索到的记忆：\n{brain_context}")
+    print("\n" + "="*30)
+    print("智能体多级记忆系统已上线")
+    print(f"当前模型: {os.getenv('MODEL_NAME')}")
+    print("输入 'exit' 退出程序")
+    print("="*30)
 
-        # 2. 生成回复
-        response = mock_agent_response(user_in)
-        print(f"Agent 回复: {response}")
+    while True:
+        user_input = input("\n用户: ").strip()
 
-        # 3. 更新记忆（这里会触发你刚才写的压缩代码）
-        mem_sys.update_and_compress(user_in, response)
+        if not user_input:
+            continue
+        if user_input.lower() in ['exit', 'quit', '退出']:
+            print("正在保存记忆并退出系统...")
+            break
+
+        # --- 执行端到端链路并统计指标 ---
+
+        # 记录开始时间
+        monitor.start_timer()
+
+        try:
+            # 执行核心推理过程
+            response = agent.run(user_id=user_id, user_input=user_input)
+
+            # 记录结束时间并获取延迟
+            latency = monitor.end_timer()
+
+            print(f"Agent: {response}")
+
+            # 4. 打印任务书要求的硬性指标
+            # 注意：Token 统计目前依赖模型返回，这里先展示延迟
+            monitor.log_metrics(latency=latency)
+
+        except Exception as e:
+            print(f"对话发生错误: {e}")
+            print("提示：请检查 API Key 余额或网络环境。")
 
 if __name__ == "__main__":
     main()

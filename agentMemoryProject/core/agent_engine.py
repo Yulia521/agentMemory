@@ -6,8 +6,8 @@ from .memory_manager import MemoryManager
 class AgentEngine:
     def __init__(self):
         # 从环境变量读取配置，这样代码就不用写死了
-        # 获取模型名字，如果没有设置，默认用 deepseek-v3
-        model = os.getenv("MODEL_NAME", "deepseek-ai/DeepSeek-OCR")
+        # 获取模型名字，如果没有设置，默认用
+        model = os.getenv("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
 
         # 这里的配置会自动读取 .env 里的 OPENAI_API_KEY 和 OPENAI_API_BASE
         self.llm = ChatOpenAI(

@@ -1,21 +1,23 @@
 import os
 import time
 from dotenv import load_dotenv
+from core.storage_manager import MemoryManager
 from core.agent_engine import AgentEngine
 from utils.monitor import PerformanceMonitor
 
 # 1. 加载 .env 配置文件
-# 它会自动读取你填好的 OPENAI_API_KEY, OPENAI_API_BASE 和 MODEL_NAME
 load_dotenv()
 
 def main():
-    # 2. 初始化性能监控器 (用于记录你论文里需要的延迟数据)
+    # 2. 初始化性能监控器
     monitor = PerformanceMonitor()
 
     print("正在连接云端大模型并初始化 Mem0 记忆系统...")
     try:
-        # 3. 实例化 Agent 引擎
-        agent = AgentEngine()
+        # 3. 创建默认的MemoryManager实例
+        memory_manager = MemoryManager()
+        # 4. 创建AgentEngine实例
+        agent = AgentEngine(memory_manager=memory_manager)
     except Exception as e:
         print(f"初始化失败，请检查 .env 配置或网络连接: {e}")
         return
@@ -45,7 +47,7 @@ def main():
 
         try:
             # 执行核心推理过程
-            response = agent.run(user_id=user_id, user_input=user_input)
+            response, token_usage = agent.run(user_id=user_id, user_input=user_input, monitor=monitor)
 
             # 记录结束时间并获取延迟
             latency = monitor.end_timer()
@@ -53,8 +55,7 @@ def main():
             print(f"Agent: {response}")
 
             # 4. 打印任务书要求的硬性指标
-            # 注意：Token 统计目前依赖模型返回，这里先展示延迟
-            monitor.log_metrics(latency=latency)
+            monitor.log_metrics(latency=latency, tokens=token_usage)
 
         except Exception as e:
             print(f"对话发生错误: {e}")
